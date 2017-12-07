@@ -28,6 +28,8 @@ stages:
   - <<: *stage
     name: bdd-tests
   - <<: *stage
+    name: bdd-tests-angular-4
+  - <<: *stage
     name: build
   - name: deploy
     if: branch = development AND type = push OR tag =~ ^v2
@@ -87,8 +89,9 @@ jobs:
     - <<: *test
       env: NGV=next
 
-#    test e2e-bdd
+#    test e2e-bdd for angular universal
     - stage: bdd-tests
+      env: baseUrlForUniversal=http://localhost:3000/
       before_script:
       - npm run build:dynamic
       - node  ./demo/dist/server.js &
@@ -96,7 +99,19 @@ jobs:
       script:
       - npm run lint-bdd
       - webdriver-manager update --standalone
-      - protractor ./protractor.cucumber.js
+      - URL=$baseUrlForUniversal npm run e2e-bdd
+
+#    test e2e-bdd for angular 4
+    - stage: bdd-tests-angular-4
+      env: baseUrlForAngular4=http://localhost:4200/#/
+      before_script:
+      - npm run build
+      - npm run link
+      - ng serve &
+      - sleep 5
+      script:
+      - webdriver-manager update --standalone
+      - URL=$baseUrlForAngular4 npm run e2e-bdd
 
 #    check prod build
     - &build
